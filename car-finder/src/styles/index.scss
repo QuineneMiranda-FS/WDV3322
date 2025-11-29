@@ -1,0 +1,51 @@
+// -------------FONT---------------
+// Open Sans font from Google Fonts
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+
+.open-sans-medium {
+  font-family: "Open Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+}
+
+.open-sans-bold {
+  font-family: "Open Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+}
+
+// ------------Colors --------------------
+$primary-header: #ffffff;
+$subtext: #d3d3d3;
+$form-panel-bg: #f2f2f2;
+$form-blue: #348fbc;
+$form-disabled: #909090;
+$selected: #212121;
+
+// ----------Screen Sizes ----------------
+
+// breakpoints for screen sizes
+$breakpoints: (
+  "small": 480px,
+  "medium": 768px,
+  "large": 1024px,
+);
+
+// --------------------Mobile -------------
+
+body {
+  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+}
+#hero {
+  background-image: url("../img/car-finder-bg.jpg");
+  // background-color: gray;
+  height: 500px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
