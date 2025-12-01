@@ -1,74 +1,93 @@
 // Imports your SCSS stylesheet
 import "./styles/index.scss";
 
+//get data
+
+import carData from "./car-dataset.json";
+
 //Data for dropdowns
-document.addEventListener("DOMContentLoaded", () => {
-  const firstDropdown = document.getElementById("firstDropdown");
-  const secondDropdown = document.getElementById("secondDropdown");
-  const thirdDropdown = document.getElementById("thirdDropdown");
-  let jsonData = {}; // To store the loaded JSON data
+const yearSelect = document.getElementById("year-select");
+const makeSelect = document.getElementById("make-select");
+const modelSelect = document.getElementById("model-select");
 
-  fetch("your_data.json") // Replace with your JSON file path or API endpoint
-    .then((response) => response.json())
-    .then((data) => {
-      jsonData = data;
-      // Populate first dropdown
-      jsonData.categories.forEach((category) => {
-        const option = document.createElement("option");
-        option.value = category.name;
-        option.textContent = category.name;
-        firstDropdown.appendChild(option);
-      });
-    })
-    .catch((error) => console.error("Error loading JSON:", error));
+function populateSelect(selectElement, items) {
+  // clear all but selected
+  while (selectElement.options.length > 1) {
+    selectElement.remove(1);
+  }
 
-  firstDropdown.addEventListener("change", () => {
-    const selectedCategoryName = firstDropdown.value;
-    secondDropdown.innerHTML = '<option value="">Select an option</option>'; // Clear
-    thirdDropdown.innerHTML = '<option value="">Select an option</option>'; // Clear
-    secondDropdown.disabled = true;
-    thirdDropdown.disabled = true;
-
-    if (selectedCategoryName) {
-      const selectedCategory = jsonData.categories.find(
-        (cat) => cat.name === selectedCategoryName
-      );
-      if (selectedCategory && selectedCategory.items) {
-        selectedCategory.items.forEach((item) => {
-          const option = document.createElement("option");
-          option.value = item.name;
-          option.textContent = item.name;
-          secondDropdown.appendChild(option);
-        });
-        secondDropdown.disabled = false;
-      }
-    }
+  items.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item;
+    option.textContent = item;
+    selectElement.appendChild(option);
   });
+  selectElement.disabled = false;
+}
 
-  secondDropdown.addEventListener("change", () => {
-    const selectedCategoryName = firstDropdown.value;
-    const selectedItemName = secondDropdown.value;
-    thirdDropdown.innerHTML = '<option value="">Select an option</option>'; // Clear
-    thirdDropdown.disabled = true;
+// populate years
+window.onload = () => {
+  const years = [...new Set(carData.map((car) => car.year))].sort();
+  populateSelect(yearSelect, years);
+};
 
-    if (selectedCategoryName && selectedItemName) {
-      const selectedCategory = jsonData.categories.find(
-        (cat) => cat.name === selectedCategoryName
-      );
-      if (selectedCategory && selectedCategory.items) {
-        const selectedItem = selectedCategory.items.find(
-          (item) => item.name === selectedItemName
-        );
-        if (selectedItem && selectedItem.subItems) {
-          selectedItem.subItems.forEach((subItem) => {
-            const option = document.createElement("option");
-            option.value = subItem;
-            option.textContent = subItem;
-            thirdDropdown.appendChild(option);
-          });
-          thirdDropdown.disabled = false;
-        }
-      }
-    }
-  });
+// use year selected to populate make
+yearSelect.addEventListener("change", function () {
+  const selectedYear = this.value;
+  if (selectedYear) {
+    const makes = [
+      ...new Set(
+        carData
+          .filter((car) => car.year === parseInt(selectedYear))
+          .map((car) => car.Manufacturer)
+      ),
+    ].sort();
+    populateSelect(makeSelect, makes);
+  } else {
+    makeSelect.selectedIndex = 0;
+    makeSelect.disabled = true;
+    modelSelect.selectedIndex = 0;
+    modelSelect.disabled = true;
+  }
+});
+
+// use make to populate model
+makeSelect.addEventListener("change", function () {
+  const selectedYear = yearSelect.value;
+  const selectedMake = this.value;
+
+  if (selectedMake && selectedYear) {
+    const models = [
+      ...new Set(
+        carData
+          .filter(
+            (car) =>
+              car.year === parseInt(selectedYear) &&
+              car.Manufacturer === selectedMake
+          )
+          .map((car) => car.model)
+      ),
+    ].sort();
+    populateSelect(modelSelect, models);
+  } else {
+    modelSelect.selectedIndex = 0;
+    modelSelect.disabled = true;
+  }
+});
+// get car data display results
+modelSelect.addEventListener("change", function () {
+  const selectedYear = yearSelect.value;
+  const selectedMake = makeSelect.value;
+  const selectedModel = this.value;
+
+  if (selectedYear && selectedMake && selectedModel) {
+    const selectedCar = carData.find(
+      (car) =>
+        car.year === parseInt(selectedYear) &&
+        car.Manufacturer === selectedMake &&
+        car.model === selectedModel
+    );
+
+    console.log("Full Selected Car Data:", selectedCar);
+  }
 });

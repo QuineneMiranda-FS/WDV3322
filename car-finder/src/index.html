@@ -15,35 +15,41 @@
         <!--BEGIN Search Container-->
         <section id="container-main">
           <h2>Find Your Dream Vehicle</h2>
-          <br />
-          <br />
-          <p>
+          <h3>
             Have you been dreaming about getting a new vehicle? <br />Well,
             you're in luck.
-          </p>
+          </h3>
+          <br />
           <!-- BEGIN Search -->
-          <div id="search">
+          <form id="search">
             <div id="column-year">
-              <h2>Year</h2>
-              <select id="firstDropdown">
-                <option value="">Select an option</option>
-              </select>
+              <h1>Year</h1>
+              <fieldset>
+                <legend>Year</legend>
+                <select id="year-select" name="Year">
+                  <option value="">Vehicle Year</option>
+                </select>
+              </fieldset>
             </div>
             <div id="column-make">
-              <h2>Make</h2>
-              <div id="make"></div>
-              <select id="secondDropdown" disabled>
-                <option value="">Select an option</option>
-              </select>
+              <h1>Make</h1>
+              <fieldset>
+                <legend>Make</legend>
+                <select id="make-select">
+                  <option value="">Vehicle Make</option>
+                </select>
+              </fieldset>
             </div>
             <div id="column-model">
-              <h2>Model</h2>
-              <div id="model"></div>
-              <select id="thirdDropdown" disabled>
-                <option value="">Select an option</option>
-              </select>
+              <h1>Model</h1>
+              <fieldset>
+                <legend>Model</legend>
+                <select id="model-select" name="Model">
+                  <option value="">Vehicle Model</option>
+                </select>
+              </fieldset>
             </div>
-          </div>
+          </form>
           <!-- END Search -->
         </section>
         <!-- END Search Container -->
