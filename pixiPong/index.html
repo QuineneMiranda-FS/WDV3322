@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ping Pong PixiJS Assignment</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #111;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <section id="game"></section>
+    <!--BEGIN PIXI script-->
+    <!-- Load in the PixiJS -->
+    <script src="https://pixijs.download/release/pixi.min.js"></script>
+    <!-- Our ES6 code goes here as a type="module" -->
+    <script type="module">
+      (async function () {
+        // --- RANDOM helper ---
+        function getRandomArbitrary(min, max) {
+          return Math.random() * (max - 2) + min;
+        }
+
+        // Setup PixiJS Application -CANVAS-
+        const app = new PIXI.Application();
+        const CANVAS_WIDTH = 900; //CHANGE canvas size HERE
+        const CANVAS_HEIGHT = 900; //CHANGE canvas size HERE
+        await app.init({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
+
+        //CANVAS -Center on page
+        document.body.appendChild(app.canvas);
+        app.canvas.style.position = "absolute";
+        const centerCanvas = () => {
+          app.canvas.style.left = `${
+            window.innerWidth / 2 - app.canvas.width / 2
+          }px`;
+          app.canvas.style.top = `${
+            window.innerHeight / 2 - app.canvas.height / 2
+          }px`;
+        };
+        centerCanvas();
+        window.addEventListener("resize", centerCanvas);
+
+        // -------------------------------------------------------
+
+        // Background Img (aka Texture Sheet) -RMV this section if distracting
+        try {
+          const baseTexture = await PIXI.Assets.load(
+            "assets/gridBackground800.jpg"
+          );
+          const frame1 = new PIXI.Rectangle(0, 0, 50, 50);
+          const texture1 = new PIXI.Texture(baseTexture, frame1);
+          const sprite1 = new PIXI.Sprite(texture1);
+          sprite1.x = 50;
+          sprite1.y = 50;
+          app.stage.addChild(sprite1);
+        } catch (e) {
+          console.warn("Background asset not found, proceeding without it.");
+          // if can't load bckgrnd, will make a solid color
+          const background = new PIXI.Graphics();
+          background.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT).fill(0x333333);
+          app.stage.addChild(background);
+        }
+
+        // -------------------------------------------------------
+
+        // Boundary Lines
+        const LINE_THICKNESS = 10;
+        const HIT_COLOR = 0xd2393e; //  CHANGE HERE  (fiery red color when hit)
+        const INITIAL_COLOR = 0x808080; // CHANGE HERE (grey color at start)
+
+        const drawBoundary = (lineGraphic, x, y, width, height, color) => {
+          lineGraphic.clear();
+          lineGraphic.rect(x, y, width, height).fill({ color: color });
+        };
+
+        const createBoundaryLine = (x, y, width, height) => {
+          const line = new PIXI.Graphics();
+          drawBoundary(line, x, y, width, height, INITIAL_COLOR);
+          app.stage.addChild(line);
+          return line;
+        };
+
+        const topLine = createBoundaryLine(0, 0, CANVAS_WIDTH, LINE_THICKNESS);
+        const bottomLine = createBoundaryLine(
+          0,
+          CANVAS_HEIGHT - LINE_THICKNESS,
+          CANVAS_WIDTH,
+          LINE_THICKNESS
+        );
+
+        const leftLine = createBoundaryLine(
+          0,
+          0,
+          LINE_THICKNESS,
+          CANVAS_HEIGHT
+        );
+        const rightLine = createBoundaryLine(
+          CANVAS_WIDTH - LINE_THICKNESS,
+          0,
+          LINE_THICKNESS,
+          CANVAS_HEIGHT
+        );
+
+        // Map -boundary flags
+        const boundaryMap = {
+          top: {
+            flag: false,
+            line: topLine,
+            x: 0,
+            y: 0,
+            w: CANVAS_WIDTH,
+            h: LINE_THICKNESS,
+          },
+          bottom: {
+            flag: false,
+            line: bottomLine,
+            x: 0,
+            y: CANVAS_HEIGHT - LINE_THICKNESS,
+            w: CANVAS_WIDTH,
+            h: LINE_THICKNESS,
+          },
+          left: {
+            flag: false,
+            line: leftLine,
+            x: 0,
+            y: 0,
+            w: LINE_THICKNESS,
+            h: CANVAS_HEIGHT,
+          },
+          right: {
+            flag: false,
+            line: rightLine,
+            x: CANVAS_WIDTH - LINE_THICKNESS,
+            y: 0,
+            w: LINE_THICKNESS,
+            h: CANVAS_HEIGHT,
+          },
+        };
+
+        // -------------------------------------------------------
+
+        // Circle -CHANGE SIZE/COLOR HERE
+        const circleRadius = 25;
+        const circle = new PIXI.Graphics();
+        circle.beginFill("#ffffff");
+        circle.drawCircle(0, 0, circleRadius);
+        circle.endFill();
+        circle.x = CANVAS_WIDTH / 2;
+        circle.y = CANVAS_HEIGHT / 2;
+        app.stage.addChild(circle);
+
+        // -------------------------------------------------------
+
+        // --- RANDOMIZATION ---
+        // CHANGE speed max/min HERE
+        const MIN_SPEED = 1;
+        const MAX_SPEED = 4;
+
+        let xv = getRandomArbitrary(MIN_SPEED, MAX_SPEED);
+        let yv = getRandomArbitrary(MIN_SPEED, MAX_SPEED);
+
+        // random direction
+        if (Math.random() < 0.5) xv *= -1;
+        if (Math.random() < 0.5) yv *= -1;
+        // -------------------------------------------------------
+
+        // Text shows when all sides hit CHANGE HERE
+        const messageStyle = new PIXI.TextStyle({
+          fontFamily: "Arial",
+          fontSize: 36,
+          fill: "#ffffff",
+          stroke: "#000000",
+          strokeThickness: 4,
+          align: "center",
+        });
+        const message = new PIXI.Text({
+          text: "All sides have been hit!",
+          style: messageStyle,
+        });
+        message.x = CANVAS_WIDTH / 2;
+        message.y = CANVAS_HEIGHT / 2 + circleRadius + 50; // Text below circle
+        message.anchor.set(0.5);
+        message.visible = false;
+        app.stage.addChild(message);
+
+        // -------------------------------------------------------
+
+        // Title text (positioned at bottom) CHANGE HERE
+        const bottomTitleStyle = new PIXI.TextStyle({
+          fontFamily: "Arial",
+          fontSize: 18,
+          fill: "#FFFFFF",
+          align: "center",
+        });
+        const bottomTitle = new PIXI.Text({
+          text: "PIXI PONG",
+          style: bottomTitleStyle,
+        });
+        bottomTitle.x = CANVAS_WIDTH / 2;
+
+        bottomTitle.y = CANVAS_HEIGHT - 30;
+        bottomTitle.anchor.set(0.5);
+        app.stage.addChild(bottomTitle);
+
+        // -------------------------------------------------------
+
+        // PROMISE
+        const waitForAllBounces = new Promise((resolve) => {
+          console.log("The script is now running.");
+          // Ticker (aka game loop)
+          app.ticker.add((delta) => {
+            // Position  --CHANGE HERE
+            circle.x += xv;
+            circle.y += yv;
+
+            // handles boundary hit logic
+            const handleHit = (boundaryKey, velocityKey, clampValue) => {
+              if (!boundaryMap[boundaryKey].flag) {
+                boundaryMap[boundaryKey].flag = true; // mark flag
+                // Change the color to (fiery red) when hit
+                const b = boundaryMap[boundaryKey];
+                drawBoundary(b.line, b.x, b.y, b.w, b.h, HIT_COLOR);
+
+                // Check if all boundaries have been hit after a new hit is registered
+                if (Object.values(boundaryMap).every((b) => b.flag)) {
+                  resolve(); // Resolve the promise
+                }
+              }
+              if (velocityKey === "x") xv = -xv;
+              else yv = -yv;
+              if (velocityKey === "x") circle.x = clampValue;
+              else circle.y = clampValue;
+            };
+
+            // checks left and right side for hit (aka horizontal)
+            if (circle.x - circleRadius < 0) {
+              handleHit("left", "x", circleRadius);
+            } else if (circle.x + circleRadius > CANVAS_WIDTH) {
+              handleHit("right", "x", CANVAS_WIDTH - circleRadius);
+            }
+
+            // check top and bottom for hit (aka vertical)
+            if (circle.y - circleRadius < 0) {
+              handleHit("top", "y", circleRadius);
+            } else if (circle.y + circleRadius > CANVAS_HEIGHT) {
+              handleHit("bottom", "y", CANVAS_HEIGHT - circleRadius);
+            }
+          });
+        });
+
+        //---------------------------------
+        await waitForAllBounces;
+        console.log("All sides have been hit.");
+
+        // Code here runs ONLY AFTER the promise resolves (all 4 sides hit) ***
+
+        // stop the circle movement ?? not sure if need
+        xv = 0;
+        yv = 0;
+
+        // return circle to center of canvas
+        circle.x = CANVAS_WIDTH / 2;
+        circle.y = CANVAS_HEIGHT / 2;
+
+        // display the msg on screen // display alert
+        message.visible = true;
+        alert("All sides have been hit.\nScript has completed.");
+        //end msg
+        console.log("Promise resolved; Script complete.");
+      })();
+    </script>
+  </body>
+</html>
